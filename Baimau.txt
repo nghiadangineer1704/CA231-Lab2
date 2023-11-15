@@ -1,0 +1,348 @@
+Bai 2
+
+.data
+    promptA: .asciiz "Enter first positive integer (a): "
+    promptB: .asciiz "Enter second positive integer (b): "
+    resultGCD: .asciiz "GCD: "
+    resultLCM: .asciiz "LCM: "
+    newLine: .asciiz "\n"
+.text
+.globl main
+
+main:
+    # Read first integer (a)
+    li $v0, 4
+    la $a0, promptA
+    syscall
+
+    li $v0, 5
+    syscall
+    move $t0, $v0  # Store 'a' in $t0
+
+    # Read second integer (b)
+    li $v0, 4
+    la $a0, promptB
+    syscall
+
+    li $v0, 5
+    syscall
+    move $t1, $v0  # Store 'b' in $t1
+
+    # Calculate GCD
+    move $a0, $t0
+    move $a1, $t1
+    jal gcd
+    move $t2, $v0  # Store GCD result in $t2
+
+    # Calculate LCM
+    mul $t3, $t0, $t1  # $t3 = a * b
+    div $t3, $t2
+    mflo $t3           # $t3 = (a * b) / GCD
+
+    # Print GCD
+    li $v0, 4
+    la $a0, resultGCD
+    syscall
+
+    li $v0, 1
+    move $a0, $t2
+    syscall
+
+    # Print new line
+    li $v0, 4
+    la $a0, newLine
+    syscall
+
+    # Print LCM
+    li $v0, 4
+    la $a0, resultLCM
+    syscall
+
+    li $v0, 1
+    move $a0, $t3
+    syscall
+
+    # Exit program
+    li $v0, 10
+    syscall
+
+# Function to calculate GCD using Euclidean algorithm
+gcd:
+    beq $a1, $zero, end_gcd  # If b is 0, GCD is a
+    move $t4, $a0
+    move $a0, $a1           # a = b
+    rem $t5, $t4, $a1       # temp = a % b
+    move $a1, $t5           # b = a % b
+    j gcd
+
+end_gcd:
+    move $v0, $a0
+    jr $ra
+.text
+.globl main
+
+main:
+    # Read and check first integer (a)
+    input_a:
+        li $v0, 4
+        la $a0, promptA
+        syscall
+
+        li $v0, 5
+        syscall
+        move $t0, $v0  # Store 'a' in $t0
+
+        blez $t0, input_a  # If 'a' is less than or equal to 0, read again
+
+    # Read and check second integer (b)
+    input_b:
+        li $v0, 4
+        la $a0, promptB
+        syscall
+
+        li $v0, 5
+        syscall
+        move $t1, $v0  # Store 'b' in $t1
+
+        blez $t1, input_b  # If 'b' is less than or equal to 0, read again
+
+    # Rest of the program (GCD and LCM calculation, output)...
+
+Bai 3
+.data
+    array:      .space 32            # 8 integers (4 bytes each)
+    prompt:     .asciiz "Enter an integer: "
+    newLine:    .asciiz "\n"
+
+.text
+.globl main
+
+main:
+    # Read integers into the array
+    la $t0, array                   # Load array address
+    li $t1, 0                       # Array index
+
+    read_loop:
+        bge $t1, 8, process_array   # Break the loop after 8 integers
+        li $v0, 4                   # Print prompt
+        la $a0, prompt
+        syscall
+
+        li $v0, 5                   # Read integer
+        syscall
+        sw $v0, 0($t0)              # Store integer in array
+
+        addi $t0, $t0, 4            # Move to the next array element
+        addi $t1, $t1, 1            # Increment index
+        j read_loop
+
+    # Process the array
+    process_array:
+    la $t0, array                   # Load array address
+    li $t1, 0                       # Array index
+
+    process_loop:
+        bge $t1, 8, print_array     # Break the loop after processing 8 elements
+        lw $t2, 0($t0)              # Load element
+
+        # Check divisibility by 4 and 3, and modify accordingly
+        li $t3, 3
+        li $t4, 4
+        rem $t5, $t2, $t4            # t5 = t2 % 4
+        bnez $t5, not_div4           # If not divisible by 4, skip
+        rem $t5, $t2, $t3            # t5 = t2 % 3
+        beqz $t5, div_by_3           # If divisible by 3, divide by 3
+        # Else, find nearest number divisible by 3
+        addi $t2, $t2, 1
+        j process_next
+
+        div_by_3:
+        div $t2, $t3
+        mflo $t2                     # Get quotient
+
+        not_div4:
+        process_next:
+        sw $t2, 0($t0)               # Store modified element
+
+        addi $t0, $t0, 4             # Move to the next array element
+        addi $t1, $t1, 1             # Increment index
+        j process_loop
+
+    # Print the array
+    print_array:
+    la $t0, array                   # Load array address
+    li $t1, 0                       # Array index
+
+    print_loop:
+        bge $t1, 8, exit_program    # Break the loop after printing 8 elements
+        lw $t2, 0($t0)              # Load element
+
+        li $v0, 1                   # Print integer
+        move $a0, $t2
+        syscall
+
+        li $v0, 4                   # Print new line
+        la $a0, newLine
+        syscall
+
+        addi $t0, $t0, 4            # Move to the next array element
+        addi $t1, $t1, 1            # Increment index
+        j print_loop
+
+    exit_program:
+    li $v0, 10                      # Exit
+    syscall
+Bai 4 
+
+.data
+    array:      .word 1, 2, 7, 7, 3, 7, 4, 5, 6, 7, 7, 8, 8, 8, 7 # Example array
+    msg:        .asciiz "Second largest value is "
+    indexMsg:   .asciiz ", found in index "
+    newLine:    .asciiz "\n"
+    space:      .asciiz " "
+Bai 5
+
+.data
+    array:       .word 1, 2, 3, 3, 3, 1, 7, 8, 9, 10  # Example array
+    uniqueMsg:   .asciiz "Unique values: "
+    dupMsg:      .asciiz "\nDuplicated values: "
+    repeatedMsg: .asciiz ", repeated "
+    timesMsg:    .asciiz " times;"
+    newLine:     .asciiz "\n"
+
+#### Code Segment
+```assembly
+.text
+.globl main
+
+main:
+    # Print unique values message
+    li $v0, 4
+    la $a0, uniqueMsg
+    syscall
+
+    # Initialize array index for unique value check
+    li $t1, 0
+
+    unique_loop:
+        # Check if end of array
+        bge $t1, 10, print_duplicates
+
+        # Load current element
+        la $t0, array
+        sll $t2, $t1, 2
+        add $t0, $t0, $t2
+        lw $t3, 0($t0)
+
+        # Initialize duplicate count
+        li $t4, 0
+
+        # Check for duplicates
+        li $t5, 0
+        duplicate_check_loop:
+            bge $t5, 10, end_duplicate_check
+
+            # Skip the current element
+            beq $t5, $t1, update_index_duplicate_check
+
+            # Load another element for comparison
+            sll $t6, $t5, 2
+            add $t7, $t0, $t6
+            lw $t8, 0($t7)
+
+            # Increment count if duplicate is found
+            beq $t3, $t8, increment_duplicate_count
+
+            update_index_duplicate_check:
+            addi $t5, $t5, 1
+            j duplicate_check_loop
+
+        increment_duplicate_count:
+        addi $t4, $t4, 1
+        j update_index_duplicate_check
+
+        end_duplicate_check:
+        # Print the element if it is unique
+        beq $t4, 1, print_unique_element
+        j update_index
+
+        print_unique_element:
+        li $v0, 1
+        move $a0, $t3
+        syscall
+
+        update_index:
+        addi $t1, $t1, 1
+        j unique_loop
+
+    print_duplicates:
+    # Print duplicate values message
+    li $v0, 4
+    la $a0, dupMsg
+    syscall
+
+    # Initialize array index for duplicate value check
+    li $t1, 0
+
+    duplicate_value_loop:
+        # Check if end of array
+        bge $t1, 10, exit_program
+
+        # Load current element
+        la $t0, array
+        sll $t2, $t1, 2
+        add $t0, $t0, $t2
+        lw $t3, 0($t0)
+
+        # Initialize duplicate count
+        li $t4, 0
+
+        # Check for duplicates
+        li $t5, 0
+        duplicate_count_loop:
+            bge $t5, 10, check_duplicate_count
+
+            # Load another element for comparison
+            sll $t6, $t5, 2
+            add $t7, $t0, $t6
+            lw $t8, 0($t7)
+
+            # Increment count if duplicate is found
+            beq $t3, $t8, increment_count
+
+            increment_count:
+            addi $t4, $t4, 1
+
+            addi $t5, $t5, 1
+            j duplicate_count_loop
+
+        check_duplicate_count:
+        # Print the element if it is a duplicate
+        bgt $t4, 1, print_duplicate_element
+        j increment_index
+
+        print_duplicate_element:
+        li $v0, 1
+        move $a0, $t3
+        syscall
+
+        li $v0, 4
+        la $a0, repeatedMsg
+        syscall
+
+        li $v0, 1
+        move $a0, $t4
+        syscall
+
+        li $v0, 4
+        la $a0, timesMsg
+        syscall
+
+        increment_index:
+        addi $t1, $t1, 1
+        j duplicate_value_loop
+
+    exit_program:
+    li $v0, 10
+    syscall
+
